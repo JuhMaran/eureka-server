@@ -1,0 +1,34 @@
+# spring.application.name=Eureka Server
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  client:
+    fetch-registry: false
+    register-with-eureka: false
+  server:
+    enable-self-preservation: true
+    eviction-interval-timer-in-ms: 60000 # Prod & Cloud
+  instance:
+    hostname: ${HOSTNAME:localhost}
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      discovery:
+        enabled: true
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: ALWAYS
+
+logging:
+  level:
+    root: debug
+    org.springframework.cloud: info
