@@ -1,0 +1,115 @@
+services:
+  # =========================
+  # Eureka Server
+  # =========================
+  eureka-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - APP_PORT=8761
+    networks:
+      - taptrack-network
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =========================
+  # API GATEWAY
+  # =========================
+  api-gateway:
+    build:
+      context: ./../api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - APP_PORT=8080
+      - EUREKA_CLIENT_SERVICEURL_DEFAULT=http://eureka-server:8761/eureka/
+    networks:
+      - taptrack-network
+
+  # =========================
+  # CONTAINER MEASURE SERVICE
+  # =========================
+  container-measure-service:
+    build:
+      context: ./../../container-measure-service
+      dockerfile: Dockerfile
+    container_name: container-measure-service
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      api-gateway:
+        condition: service_started
+    ports:
+      - "8093:8093"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - APP_PORT=8093
+      - SPRING_PROFILES_ACTIVE=dev
+      - EUREKA_CLIENT_SERVICEURL_DEFAULT=http://eureka-server:8761/eureka/
+    networks:
+      - taptrack-network
+
+  # =========================
+  # FRONTEND (Angular)
+  # =========================
+  taptrack-frontend:
+    build:
+      context: ./../../frontend-angular/taptrack-frontend
+      dockerfile: Dockerfile
+    container_name: taptrack-frontend
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "4200:4200"
+    networks:
+      - taptrack-network
+
+  # ==================================================
+  # MYSQL (opcional – apenas para referência futura)
+  # ==================================================
+#  mysql:
+#    image: mysql:8.0
+#    container_name: mysql
+#    restart: unless-stopped
+#    ports:
+#      - "3306:3306"
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: container_measure_db
+#      MYSQL_USER: root
+#      MYSQL_PASSWORD: root
+#    command: --default-authentication-plugin=mysql_native_password
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+#    networks:
+#      - taptrack-network
+
+# ==================================================
+# NETWORK & VOLUMES
+# ==================================================
+networks:
+  taptrack-network:
+    driver: bridge
+
+#volumes:
+#  mysql_data:
+
+
+
+
+

@@ -21,6 +21,24 @@
 
 ### Usando Docker
 
+1. Acessar o `wsl`
+2. Build Manual: `docker build -t eureka-server .`
+3. Rodar container: `docker run -p 8761:8761 eureka-server`
+4. Logs em tempo real: `docker logs -f <container-id>`
+
+### Rede Docker 
+
+Se quiser que os serviços conversem entre si localmente
+
+```bash
+docker network create taptrack-net
+docker run -d --network taptrack-net --name eureka eureka-server
+docker run -d --network taptrack-net --name gateway api-gateway
+docker run -d --network taptrack-net --name container-measure container-measure-service
+docker run -d --network taptrack-net --name frontend -p 4200:4200 taptrack-frontend
+```
+
+
 ---
 
 ## Licença
