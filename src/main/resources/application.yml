@@ -1,21 +1,31 @@
-# spring.application.name=Eureka Server
+# Eureka Server --- application.yml
 server:
-  port: 8761
+  port: ${APP_PORT:8761}
 
 spring:
   application:
     name: eureka-server
+  cache:
+    type: CAFFEINE
+    cache-names:
+      - eurekaCache
+  security:
+    user:
+      name: ${EUREKA_USER:admin}
+      password: ${EUREKA_PASS:admin123}
 
 eureka:
   client:
+    # Este servidor não se registra em outro Eureka
     fetch-registry: false
     register-with-eureka: false
   server:
     enable-self-preservation: true
-    eviction-interval-timer-in-ms: 60000 # Prod & Cloud
+    eviction-interval-timer-in-ms: 60000 # Intervalo de remoção de instâncias inativas
   instance:
-    hostname: ${HOSTNAME:localhost}
+    hostname: ${EUREKA_HOST:localhost}
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${EUREKA_HOST}:${server.port}
 
 management:
   endpoints:
@@ -23,12 +33,18 @@ management:
       discovery:
         enabled: true
       exposure:
-        include: '*'
+        include: health, info, metrics, env, caches
   endpoint:
     health:
-      show-details: ALWAYS
+      show-details: WHEN_AUTHORIZED  # detalhes de health apenas para usuários autenticados
+  info:
+    env:
+      enabled: true
 
 logging:
+  file:
+    name: logs/eureka-server.log
   level:
-    root: debug
-    org.springframework.cloud: info
+    root: info
+    org.springframework.cloud.netflix.eureka: info
+    org.springframework.boot.web.embedded.tomcat: warn
